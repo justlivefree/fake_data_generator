@@ -19,8 +19,7 @@ public abstract class BaseGenerator {
 
     public BaseGenerator(Path templatePath) {
         try {
-            JSONTemplateParser jsonParser = new JSONTemplateParser(Files.readString(templatePath));
-            this.schema = jsonParser.getSchema();
+            this.schema = JSONTemplateParser.getSchema(Files.readString(templatePath));
             this.faker = new Faker(Locale.of(schema.getLocale()));
         } catch (JSONException e) {
             throw new InvalidTemplateFile(e);
