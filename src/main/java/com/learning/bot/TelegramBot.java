@@ -1,10 +1,10 @@
 package com.learning.bot;
 
 import com.learning.core.enums.OutputFormat;
-import com.learning.core.exceptions.InvalidTemplateFile;
 import com.learning.core.generator.BaseGenerator;
 import com.learning.core.generator.JSONGenerator;
 import com.learning.core.generator.SQLGenerator;
+import com.learning.core.parsers.CommandParser;
 import com.learning.core.parsers.JSONTemplateParser;
 import com.learning.core.schema.Schema;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -56,9 +56,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private Path generateFakeData(String templatePath) throws IOException {
-        JSONTemplateParser jsonParser = new JSONTemplateParser(Files.readString(Path.of(templatePath)));
-        Schema schema = jsonParser.getSchema();
+    private Path generateFakeData(Path path) throws IOException {
+        Schema schema = JSONTemplateParser.getSchema(Files.readString(path));
+        BaseGenerator generator;
+        if (schema.getFormat() == OutputFormat.SQL) {
+            generator = new SQLGenerator(schema);
+        } else {
+            generator = new JSONGenerator(schema);
+        }
+        Path outputPath = Path.of(generatePath() + schema.getFormat().name().toLowerCase());
+        generator.save(outputPath);
+        return outputPath;
+    }
+
+    private Path generateFakeData(String command) throws IOException {
+        Schema schema = CommandParser.getSchema(command);
         BaseGenerator generator;
         if (schema.getFormat() == OutputFormat.SQL) {
             generator = new SQLGenerator(schema);
@@ -76,7 +88,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             if (message.hasDocument() && message.getDocument().getFileName().endsWith(".json")) {
                 String templatePath = downloadDocument(update.getMessage().getDocument());
-                Path outputPath = generateFakeData(templatePath);
+                Path outputPath = generateFakeData(Path.of(templatePath));
                 SendDocument sendDocument = new SendDocument();
                 sendDocument.setChatId(message.getChatId());
                 sendDocument.setDocument(new InputFile(new File(outputPath.toString())));
@@ -88,20 +100,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 "Welcome! Bot for making fake data. For making data please send me template like json file"
                         )
                 );
+            } else if (message.hasText()) {
+                Path outputPath = generateFakeData(message.getText());
+                SendDocument sendDocument = new SendDocument();
+                sendDocument.setChatId(message.getChatId());
+                sendDocument.setDocument(new InputFile(new File(outputPath.toString())));
+                execute(sendDocument);
             }
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidTemplateFile e) {
-            try {
-                execute(new SendMessage(
-                        message.getChatId().toString(),
-                        "Invalid json file"
-                ));
-            } catch (TelegramApiException ex) {
-                throw new RuntimeException(ex);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (TelegramApiException | IOException | RuntimeException e) {
+            e.printStackTrace();
         }
     }
 
