@@ -1,79 +1,69 @@
 package com.learning.core.parsers;
 
-import com.learning.core.enums.OutputFormat;
 import com.learning.core.fields.base.BaseField;
 import com.learning.core.schema.Option;
 import com.learning.core.schema.Schema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class CommandParser extends BaseParser {
-    public static Schema getSchema(String text) {
+    private final String text;
+    private final char[] arr;
+    private final Predicate<Character> isLowerCase = c -> 'a' <= c && c <= 'z';
+    private final Predicate<Character> isUpperCase = c -> 'A' <= c && c <= 'Z';
+    private final Predicate<Character> isDigit = c -> '0' <= c && c <= '9';
+    private final Predicate<Character> isUnderscore = c -> c == '_';
+    private final Predicate<Character> isHyphen = c -> c == '-';
+
+
+    public CommandParser(String text) {
+        this.text = text;
+        this.arr = text.toCharArray();
+    }
+
+    public StringBuilder getField(String field, Predicate<Character> predicate, boolean throwError) {
+        StringBuilder fieldSB = new StringBuilder();
+        int fieldValueIndex = text.indexOf(field);
+        if (fieldValueIndex >= 0) {
+            for (int i = fieldValueIndex + field.length(); i < arr.length; i++) {
+                if (predicate.test(arr[i])) {
+                    fieldSB.append(arr[i]);
+                } else {
+                    break;
+                }
+            }
+        }
+        return fieldSB;
+    }
+
+    public Schema getSchema() {
         Schema schema = new Schema();
-        char[] arr = text.toCharArray();
-        StringBuilder countValue = new StringBuilder();
-        for (int i = text.indexOf("--count ") + 8; i < arr.length; i++) {
-            if ('0' <= arr[i] && arr[i] <= '9') {
-                countValue.append(arr[i]);
-            } else {
-                break;
-            }
-        }
-        schema.setCount(Long.parseLong(countValue.toString()));
 
-        StringBuilder localeValue = new StringBuilder();
-        for (int i = text.indexOf("--locale ") + 9; i < arr.length; i++) {
-            if (('a' <= arr[i] && arr[i] <= 'z') || ('A' <= arr[i] && arr[i] <= 'Z') || arr[i] == '-') {
-                localeValue.append(arr[i]);
-            } else {
-                break;
-            }
-        }
-        schema.setLocale(localeValue.toString());
-
-        StringBuilder outputValue = new StringBuilder();
-        for (int i = text.indexOf("--output ") + 9; i < arr.length; i++) {
-            if (('a' <= arr[i] && arr[i] <= 'z') || ('A' <= arr[i] && arr[i] <= 'Z')) {
-                outputValue.append(arr[i]);
-            } else {
-                break;
-            }
-        }
-        String output = outputValue.toString().toUpperCase();
-        System.out.println(outputValue);
-        if (output.equals(OutputFormat.JSON.name()) || output.equals(OutputFormat.SQL.name()) || output.equals(OutputFormat.CSV.name())) {
-            schema.setFormat(OutputFormat.valueOf(output));
-        } else {
-            throw new RuntimeException();
+        // COUNT
+        StringBuilder countSB = getField("--count ", isDigit, true);
+        if (!countSB.isEmpty()) {
+            schema.setCount(Long.parseLong(countSB.toString()));
         }
 
-        StringBuilder tableNameValue = new StringBuilder();
-        for (int i = text.indexOf("--table-name ") + 13; i < arr.length; i++) {
-            if (('a' <= arr[i] && arr[i] <= 'z') || ('A' <= arr[i] && arr[i] <= 'Z') || arr[i] == '_') {
-                tableNameValue.append(arr[i]);
-            } else {
-                break;
-            }
-        }
-        schema.setTableName(tableNameValue.toString());
+        // LOCALE
+        StringBuilder localeSB = getField("--locale ", isLowerCase.or(isUpperCase).or(isHyphen), true);
+        schema.setLocale(localeSB.toString());
 
-        StringBuilder createTableValue = new StringBuilder();
-        for (int i = text.indexOf("--create-table ") + 15; i < arr.length; i++) {
-            if (('a' <= arr[i] && arr[i] <= 'z')) {
-                createTableValue.append(arr[i]);
-            } else {
-                break;
-            }
-        }
-        String createTable = createTableValue.toString();
-        if (createTable.equals("true") || createTable.equals("false")) {
-            schema.setCreateTable(Boolean.parseBoolean(createTable));
-        } else {
-            schema.setCreateTable(false);
-        }
+        // OUTPUT
+        StringBuilder outputSB = getField("--output ", isLowerCase.or(isUpperCase), true);
+        schema.setFormatAsString(outputSB.toString());
 
+        // TABLE NAME
+        StringBuilder tableNameSB = getField("--table-name ", isLowerCase.or(isUpperCase).or(isUnderscore), false);
+        schema.setTableName(tableNameSB.toString());
 
+        // CREATE TABLE
+        StringBuilder createTableSB = getField("--create-table ", isLowerCase, false);
+        schema.setCreateTableAsString(createTableSB.toString());
+
+        // FIELDS
         StringBuilder fieldsValue = new StringBuilder();
         for (int i = text.indexOf("--fields ") + 9; i + 1 <= text.indexOf("]"); i++) {
             if (arr[i] == ' ' || arr[i] == '\n' || arr[i] == '\t' || arr[i] == '[') {
@@ -111,7 +101,7 @@ public class CommandParser extends BaseParser {
                 option = new Option();
             }
             option.setFieldName(fieldName);
-            System.out.println(option);
+            option.check();
             if (i == fields.length()) {
                 fields = "";
             } else {
@@ -120,6 +110,7 @@ public class CommandParser extends BaseParser {
             fieldsList.add(toFieldObject(fieldTypeSB.toString(), option));
         }
         schema.setFields(fieldsList);
+        schema.check();
         return schema;
     }
 }
