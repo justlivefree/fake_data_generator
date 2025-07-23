@@ -1,5 +1,6 @@
 package com.learning.core.generator;
 
+import com.learning.core.exceptions.GeneratorError;
 import com.learning.core.fields.base.BaseField;
 import com.learning.core.schema.Schema;
 
@@ -22,9 +23,7 @@ public class SQLGenerator extends BaseGenerator {
 
 
     public void save(Path outputPath) {
-        try (FileWriter fileWriter = new FileWriter(outputPath.toString());
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)
-        ) {
+        try (FileWriter fileWriter = new FileWriter(outputPath.toString()); BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             // table fields and creation
             StringJoiner tableFields = new StringJoiner(",\n");
             StringJoiner fieldsString = new StringJoiner(", ");
@@ -32,7 +31,7 @@ public class SQLGenerator extends BaseGenerator {
                 fieldsString.add(field.getOption().getFieldName());
                 tableFields.add("\t" + field.sqlTableField());
             }
-            if (schema.isCreateTable()) {
+            if (schema.getCreateTable()) {
                 bufferedWriter.write("CREATE TABLE IF NOT EXISTS %s (\n%s\n);\n\n".formatted(schema.getTableName(), tableFields.toString()));
             }
 
@@ -46,10 +45,8 @@ public class SQLGenerator extends BaseGenerator {
                 bufferedWriter.write(stringQuery.formatted(schema.getTableName(), fieldsString.toString(), values.toString()));
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new GeneratorError("Invalid file: " + e.getMessage());
         }
-
-
     }
 
     @Override
