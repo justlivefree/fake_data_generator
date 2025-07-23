@@ -1,12 +1,12 @@
 package com.learning.core.parsers;
 
 import com.learning.core.enums.FieldType;
+import com.learning.core.exceptions.SchemaError;
 import com.learning.core.fields.*;
 import com.learning.core.fields.base.BaseField;
 import com.learning.core.schema.Option;
 
 public abstract class BaseParser {
-
 
     public static BaseField toFieldObject(String fieldType, Option option) {
         if (fieldType.equalsIgnoreCase(FieldType.FULL_NAME.toString())) {
@@ -60,6 +60,6 @@ public abstract class BaseParser {
         if (fieldType.equalsIgnoreCase(FieldType.CREDIT_CARD.toString())) {
             return new CreditCardField(option);
         }
-        return null;
+        throw new SchemaError("Invalid field type");
     }
 }
