@@ -1,8 +1,8 @@
 package com.learning.core.generator;
 
 import com.github.javafaker.Faker;
-import com.learning.core.exceptions.InvalidTemplateFile;
-import com.learning.core.parsers.JSONTemplateParser;
+import com.learning.core.exceptions.GeneratorError;
+import com.learning.core.parsers.JSONParser;
 import com.learning.core.schema.Schema;
 import lombok.Getter;
 import org.json.JSONException;
@@ -17,14 +17,14 @@ public abstract class BaseGenerator {
     protected final Schema schema;
     protected final Faker faker;
 
-    public BaseGenerator(Path templatePath) {
+    public BaseGenerator(Path jsonTemplatePath) {
         try {
-            this.schema = JSONTemplateParser.getSchema(Files.readString(templatePath));
+            this.schema = new JSONParser(Files.readString(jsonTemplatePath)).getSchema();
             this.faker = new Faker(Locale.of(schema.getLocale()));
         } catch (JSONException e) {
-            throw new InvalidTemplateFile(e);
+            throw new GeneratorError("Invalid JSON: " + e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new GeneratorError("Invalid file: " + e.getMessage());
         }
     }
 
@@ -33,7 +33,7 @@ public abstract class BaseGenerator {
             this.schema = schema;
             this.faker = new Faker(Locale.of(schema.getLocale()));
         } catch (JSONException e) {
-            throw new InvalidTemplateFile(e);
+            throw new GeneratorError("Invalid JSON: " + e.getMessage());
         }
     }
 
