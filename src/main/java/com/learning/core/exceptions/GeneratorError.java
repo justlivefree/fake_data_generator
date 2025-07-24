@@ -1,10 +1,12 @@
 package com.learning.core.exceptions;
 
-public class GeneratorError extends RuntimeException {
-    public GeneratorError() {
-    }
+public class GeneratorError extends BaseException {
 
     public GeneratorError(String message) {
         super(message);
+    }
+
+    public GeneratorError(String message, String userMessage) {
+        super(message, userMessage);
     }
 }
