@@ -1,6 +1,7 @@
 package com.learning.core.generator;
 
 import com.learning.core.enums.OutputFormat;
+import com.learning.core.exceptions.GeneratorError;
 import com.learning.core.fields.base.BaseField;
 import com.learning.core.schema.Schema;
 
@@ -41,7 +42,7 @@ public class JSONGenerator extends BaseGenerator {
             }
             bufferedWriter.write("\n]");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new GeneratorError(e.getMessage(), "Error occurred while saving file");
         }
     }
 
