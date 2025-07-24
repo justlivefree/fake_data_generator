@@ -38,7 +38,7 @@ public class Schema {
         try {
             this.format = OutputFormat.valueOf(format.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new SchemaError("Invalid output format");
+            throw new SchemaError(e.getMessage(), "Invalid output format");
         }
     }
 
@@ -46,7 +46,7 @@ public class Schema {
         try {
             this.createTable = Boolean.parseBoolean(createTable);
         } catch (IllegalArgumentException e) {
-            throw new SchemaError("Invalid argument for create table field");
+            throw new SchemaError(e.getMessage(), "Invalid argument for create table field");
         }
     }
 }

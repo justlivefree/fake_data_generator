@@ -43,7 +43,7 @@ public class Option {
             }
             return option;
         } catch (JSONException e) {
-            throw new SchemaError("Invalid schema: " + e.getMessage());
+            throw new SchemaError("Invalid schema: " + e.getMessage(), "Invalid values in options");
         }
 
     }

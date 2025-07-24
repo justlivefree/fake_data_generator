@@ -51,7 +51,7 @@ public class JSONParser extends BaseParser {
             schema.check();
             return schema;
         } catch (JSONException e) {
-            throw new JSONTemplateError("Invalid JSON: " + e.getMessage());
+            throw new JSONTemplateError("Invalid JSON: " + e.getMessage(), "Invalid json schema field value");
         }
     }
 }

@@ -45,7 +45,7 @@ public class SQLGenerator extends BaseGenerator {
                 bufferedWriter.write(stringQuery.formatted(schema.getTableName(), fieldsString.toString(), values.toString()));
             }
         } catch (IOException e) {
-            throw new GeneratorError("Invalid file: " + e.getMessage());
+            throw new GeneratorError("Invalid file: " + e.getMessage(), "Error occurred while saving file");
         }
     }
 
