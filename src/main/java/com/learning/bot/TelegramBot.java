@@ -11,6 +11,7 @@ import com.learning.core.generator.SQLGenerator;
 import com.learning.core.parsers.CommandParser;
 import com.learning.core.parsers.JSONParser;
 import com.learning.core.schema.Schema;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -30,8 +31,14 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private static final String TOKEN = "6302242715:AAFZP3my-tjBHt1cvxG6kBCszZqUWI_qWeE";
-    private static final String USERNAME = "@dcolapebot";
+    private final static String TOKEN;
+    private final static String USERNAME;
+
+    static {
+        Dotenv dotenv = Dotenv.load();
+        TOKEN = dotenv.get("BOT_TOKEN");
+        USERNAME = dotenv.get("BOT_USERNAME");
+    }
 
     @Override
     public String getBotToken() {
@@ -116,7 +123,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException | IOException e) {
             e.printStackTrace();
         } catch (GeneratorError | JSONTemplateError | CommandTemplateError | SchemaError e) {
-            sendTextMessage(message.getChatId(), e.getMessage());
+            sendTextMessage(message.getChatId(), e.getUserMessage());
         }
     }
 
